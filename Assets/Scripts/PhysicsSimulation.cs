@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DefaultNamespace;
 using UnityEngine;
+using UnityEngine.InputSystem.Controls;
 
 public class PhysicsSimulation : MonoBehaviour
 {
@@ -109,13 +110,27 @@ public class PhysicsSimulation : MonoBehaviour
     {
         // TODO: Calculate the ball's position and velocity by solving the system
         // of forces using Euler's method
+
+
         // (1) Calculate total forces
+        Vector3 totalForce = Vector3.zero;
+        foreach (var force in forces)
+        {
+            totalForce += force.GetForce(ball);
+        }
+
+        var accel = totalForce / ball.Mass;
+        var delta = Time.deltaTime;
 
         // (2) Solve the system of forces using Euler's method,
         //     and update the ball's position and velocity.
 
+        ball.Position += delta * ball.Velocity;
+        ball.Velocity += delta * accel;
+
         // Update the transform of the actual game object
         ball.SphereGameObject.transform.position = ball.Position;
+
     }
 
     public static bool OnCollision(Sphere ball, CustomCollider customCollider)
@@ -146,6 +161,10 @@ public class PhysicsSimulation : MonoBehaviour
             float colliderRadius = colliderSize.x / 2f;  // We assume a sphere collider has the same x,y, and z scale values
 
             // TODO: Detect collision with a sphere collider.
+            collisionOccurred = localPos.magnitude <= colliderRadius + ballRadius;
+            isEntering = Vector3.Dot(localVelocity, localPos) < 0;
+            normal = localPos.normalized;
+             
         }
         else if (customCollider.CompareTag("PlaneCollider"))
         {
@@ -153,9 +172,14 @@ public class PhysicsSimulation : MonoBehaviour
 
             var planeHeight = colliderSize.x * 10; // height of plane, defined by the x-scale
             var planeWidth = colliderSize.z * 10; // width of plane, defined by the z-scale
-            // Note: In Unity, a plane's actual size is its inspector values times 10.
+                                                  // Note: In Unity, a plane's actual size is its inspector values times 10.
 
             // TODO: Detect sphere collision with a plane collider
+            var withinBounds = Mathf.Abs(localPos.x) <= planeWidth / 2 + ballRadius && Mathf.Abs(localPos.z) <= planeHeight / 2 + ballRadius;
+            collisionOccurred = localPos.y <= ballRadius && withinBounds;
+            isEntering = localVelocity.y < 0;
+
+            normal = Vector3.up;
 
 
             // Generally, when the sphere is moving on the plane, the restitution alone is not enough
@@ -167,6 +191,9 @@ public class PhysicsSimulation : MonoBehaviour
                 //   1. Find the new localPos of the ball that is always on the plane
                 //   2. Convert the localPos to worldPos
                 //   3. Update the sphere's position with the new value
+                localPos.y = ballRadius;
+                Vector3 newWorldPos = colliderTransform.TransformPoint(localPos);
+                ball.Position = newWorldPos;
             }
         }
 
@@ -175,6 +202,8 @@ public class PhysicsSimulation : MonoBehaviour
         {
             // The sphere needs to bounce.
             // TODO: Update the sphere's velocity, remember to bring the velocity to world space
+            Vector3 reflectedLocalVelocity = localVelocity - (1 + colliderRestitution) * Vector3.Dot(localVelocity, normal) * normal;
+            ball.Velocity = colliderTransform.TransformDirection(reflectedLocalVelocity);
         }
 
 

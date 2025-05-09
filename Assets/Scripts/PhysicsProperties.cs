@@ -37,17 +37,19 @@ public class ConstantForce : IForce {
     }
 }
 
-
-// TODO: Implement viscous drag force (f = -k_d * v)
-// Refer to ConstantForce above as an example
 public class ViscousDragForce : IForce {
-    public ViscousDragForce(float k_d) {
+    private float k_d;
+    public ViscousDragForce(float k_d)
+    {
+        this.k_d = k_d;
     }
 
     public Vector3 GetForce(Sphere p) {
-        return Vector3.zero;
+        return -k_d * p.Velocity;
     }
 
-    public void SetDragCoefficient(float k_d) {
+    public void SetDragCoefficient(float k_d)
+    {
+        this.k_d = k_d;
     }
 }
