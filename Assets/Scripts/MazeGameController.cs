@@ -70,12 +70,13 @@ namespace MazeGameScripts
 
 
             // TODO: Use our physics engine to simulate one time step
+            PhysicsSimulation.ComputeSphereMovement(_ball, _forces);
 
             // Detect all colliders in scene
             foreach (var customCollider in _colliders)
             {
                 // TODO: Use our physics engine to determine collision
-                bool collided = false;
+                bool collided = PhysicsSimulation.OnCollision(_ball, customCollider);
 
                 if (collided && customCollider.transform.name == "Collectible")
                 {

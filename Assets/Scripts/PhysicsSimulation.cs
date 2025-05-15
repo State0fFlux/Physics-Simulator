@@ -160,7 +160,7 @@ public class PhysicsSimulation : MonoBehaviour
             // Collision with a sphere collider
             float colliderRadius = colliderSize.x / 2f;  // We assume a sphere collider has the same x,y, and z scale values
 
-            // TODO: Detect collision with a sphere collider.
+            // DONE: Detect collision with a sphere collider.
             collisionOccurred = localPos.magnitude <= colliderRadius + ballRadius;
             isEntering = Vector3.Dot(localVelocity, localPos) < 0;
             normal = localPos.normalized;
@@ -174,26 +174,31 @@ public class PhysicsSimulation : MonoBehaviour
             var planeWidth = colliderSize.z * 10; // width of plane, defined by the z-scale
                                                   // Note: In Unity, a plane's actual size is its inspector values times 10.
 
-            // TODO: Detect sphere collision with a plane collider
-            var withinBounds = Mathf.Abs(localPos.x) <= planeWidth / 2 + ballRadius && Mathf.Abs(localPos.z) <= planeHeight / 2 + ballRadius;
+            // DONE: Detect sphere collision with a plane collider
+            bool withinBounds = Mathf.Abs(localPos.z) <= planeWidth / 2 + ballRadius && Mathf.Abs(localPos.x) <= planeHeight / 2 + ballRadius;
             collisionOccurred = localPos.y <= ballRadius && withinBounds;
             isEntering = localVelocity.y < 0;
-
-            normal = Vector3.up;
-
-
+            
             // Generally, when the sphere is moving on the plane, the restitution alone is not enough
             // to counter gravity and the ball will eventually sink. We solve this by ensuring that
             // the ball stays above the plane.
             if (collisionOccurred && isEntering)
             {
-                // TODO: Follow these steps to ensure the sphere always on top of the plane.
-                //   1. Find the new localPos of the ball that is always on the plane
-                //   2. Convert the localPos to worldPos
-                //   3. Update the sphere's position with the new value
-                localPos.y = ballRadius;
-                Vector3 newWorldPos = colliderTransform.TransformPoint(localPos);
-                ball.Position = newWorldPos;
+                Debug.Log(localPos);
+                Debug.Log(colliderTransform.TransformPoint(localPos));
+                Vector3 closestPoint = new Vector3(Mathf.Clamp(localPos.x, -planeHeight/2, planeHeight/2), 0, Mathf.Clamp(localPos.z, -planeWidth/2, planeWidth/2));
+                bool onBorder = Mathf.Abs(closestPoint.x) == planeHeight/2 || Mathf.Abs(closestPoint.z) == planeWidth/2;
+                normal = Vector3.up;
+                if (onBorder)
+                {
+                    normal = (localPos - closestPoint).normalized;
+                    //Debug.Log(normal);
+                }
+
+                // DONE: Follow these steps to ensure the sphere always on top of the plane.
+                localPos = closestPoint + normal * ballRadius; // 1. Find the new localPos of the ball that is always on the plane
+                Vector3 newWorldPos = colliderTransform.TransformPoint(localPos); // 2. Convert the localPos to worldPos
+                ball.Position = newWorldPos; // 3. Update the sphere's position with the new value
             }
         }
 
@@ -201,7 +206,7 @@ public class PhysicsSimulation : MonoBehaviour
         if (collisionOccurred && isEntering)
         {
             // The sphere needs to bounce.
-            // TODO: Update the sphere's velocity, remember to bring the velocity to world space
+            // DONE: Update the sphere's velocity, remember to bring the velocity to world space
             Vector3 reflectedLocalVelocity = localVelocity - (1 + colliderRestitution) * Vector3.Dot(localVelocity, normal) * normal;
             ball.Velocity = colliderTransform.TransformDirection(reflectedLocalVelocity);
         }
