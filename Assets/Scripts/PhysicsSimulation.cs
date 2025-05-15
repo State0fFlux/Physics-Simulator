@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DefaultNamespace;
+using UnityEditor.UI;
 using UnityEngine;
 using UnityEngine.InputSystem.Controls;
 
@@ -175,8 +176,9 @@ public class PhysicsSimulation : MonoBehaviour
                                                   // Note: In Unity, a plane's actual size is its inspector values times 10.
 
             // DONE: Detect sphere collision with a plane collider
-            bool withinBounds = Mathf.Abs(localPos.z) <= planeWidth / 2 + ballRadius && Mathf.Abs(localPos.x) <= planeHeight / 2 + ballRadius;
-            collisionOccurred = localPos.y <= ballRadius && withinBounds;
+            Vector3 closestPoint = new Vector3(Mathf.Clamp(localPos.x, -planeHeight/2, planeHeight/2), 0, Mathf.Clamp(localPos.z, -planeWidth/2, planeWidth/2));
+            Vector3 ballToClosest = localPos - closestPoint;
+            collisionOccurred = ballToClosest.magnitude <= ballRadius;
             isEntering = localVelocity.y < 0;
             
             // Generally, when the sphere is moving on the plane, the restitution alone is not enough
@@ -184,15 +186,11 @@ public class PhysicsSimulation : MonoBehaviour
             // the ball stays above the plane.
             if (collisionOccurred && isEntering)
             {
-                Debug.Log(localPos);
-                Debug.Log(colliderTransform.TransformPoint(localPos));
-                Vector3 closestPoint = new Vector3(Mathf.Clamp(localPos.x, -planeHeight/2, planeHeight/2), 0, Mathf.Clamp(localPos.z, -planeWidth/2, planeWidth/2));
                 bool onBorder = Mathf.Abs(closestPoint.x) == planeHeight/2 || Mathf.Abs(closestPoint.z) == planeWidth/2;
                 normal = Vector3.up;
                 if (onBorder)
                 {
-                    normal = (localPos - closestPoint).normalized;
-                    //Debug.Log(normal);
+                    normal = ballToClosest.normalized;
                 }
 
                 // DONE: Follow these steps to ensure the sphere always on top of the plane.
